@@ -373,14 +373,16 @@ func (sh *Shell) evalParamExpr(inner string) (string, error) {
 	// ${#name} — length
 	if strings.HasPrefix(inner, "#") && len(inner) > 1 {
 		name := inner[1:]
-		val, _ := sh.Env.Get(name)
+		if name == "@" || name == "*" {
+			return strconv.Itoa(len(sh.Positionals) - 1), nil
+		}
+		val, _ := sh.getVarOrSpecial(name)
 		return strconv.Itoa(len(val)), nil
 	}
 
-	// Find operator
 	// Two-character operators must be checked before one-character operators
 	for _, op := range []string{":-", ":=", ":?", ":+", "##", "%%"} {
-		if idx := strings.Index(inner, op); idx >= 0 {
+		if idx := strings.Index(inner, op); idx > 0 {
 			name := inner[:idx]
 			word := inner[idx+len(op):]
 			return sh.applyParamOp(name, op, word)
@@ -388,7 +390,7 @@ func (sh *Shell) evalParamExpr(inner string) (string, error) {
 	}
 	// One-character operators
 	for _, op := range []string{"-", "=", "?", "+", "#", "%"} {
-		if idx := strings.Index(inner, op); idx >= 0 {
+		if idx := strings.Index(inner, op); idx > 0 {
 			name := inner[:idx]
 			word := inner[idx+len(op):]
 			return sh.applyParamOp(name, op, word)
@@ -397,12 +399,60 @@ func (sh *Shell) evalParamExpr(inner string) (string, error) {
 
 
 	// Just ${name}
-	val, _ := sh.Env.Get(inner)
+	val, _ := sh.getVarOrSpecial(inner)
 	return val, nil
 }
 
+// getVarOrSpecial looks up a variable, handling special names like @, *, #, ?, $, !, -, and positionals.
+func (sh *Shell) getVarOrSpecial(name string) (string, bool) {
+	if name == "" {
+		return "", false
+	}
+	if len(name) == 1 {
+		switch name[0] {
+		case '@':
+			return strings.Join(sh.Positionals[1:], " "), true
+		case '*':
+			ifs := sh.getIFS()
+			sep := " "
+			if len(ifs) > 0 {
+				sep = string(ifs[0])
+			}
+			return strings.Join(sh.Positionals[1:], sep), true
+		case '#':
+			return strconv.Itoa(len(sh.Positionals) - 1), true
+		case '?':
+			return strconv.Itoa(sh.LastStatus), true
+		case '$':
+			return strconv.Itoa(os.Getpid()), true
+		case '!':
+			return strconv.Itoa(sh.LastBgPID), true
+		case '-':
+			return sh.shellFlags(), true
+		}
+	}
+	
+	isNumeric := true
+	for _, r := range name {
+		if r < '0' || r > '9' {
+			isNumeric = false
+			break
+		}
+	}
+	if isNumeric {
+		n, _ := strconv.Atoi(name)
+		val := sh.getPositional(n)
+		if n < len(sh.Positionals) {
+			return val, true
+		}
+		return "", false
+	}
+	
+	return sh.Env.Get(name)
+}
+
 func (sh *Shell) applyParamOp(name, op, word string) (string, error) {
-	val, set := sh.Env.Get(name)
+	val, set := sh.getVarOrSpecial(name)
 
 	switch op {
 	case ":-", "-":

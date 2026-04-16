@@ -79,6 +79,10 @@ expect_output "shift-n" \
   'set -- a b c d; shift 2; echo $@' \
   "c d"
 
+expect_output "shift-out-of-bounds" \
+  'set -- a b c; shift 5 2>/dev/null; echo "Status: $?, Count: $#"' \
+  "Status: 1, Count: 3"
+
 # --- unset ---
 
 expect_output "unset-var" \

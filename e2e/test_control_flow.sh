@@ -166,6 +166,11 @@ expect_output "complex-and-or" \
    [ $x -gt 3 ] && [ $x -lt 10 ] && echo "in range"' \
   "in range"
 
+# --- Pipelines determinism ---
+
+expect_output "pipeline-false-true" 'false | true; echo $?' "0"
+expect_output "pipeline-true-false" 'true | false; echo $?' "1"
+
 # --- Return from nested context ---
 
 expect_output "return-from-loop" \

@@ -16,6 +16,10 @@ expect_output "undefined-is-empty"   'echo ${UNDEFINED_VAR}'      ""
 expect_output "length-string"  'x=hello;      echo ${#x}'  "5"
 expect_output "length-empty"   'x=;           echo ${#x}'  "0"
 expect_output "length-number"  'x=12345;      echo ${#x}'  "5"
+expect_output "length-at"      'set -- a b c; echo ${#@}'  "3"
+expect_output "length-star"    'set -- a b c; echo ${#*}'  "3"
+expect_output "length-hash"    'set -- a b c; echo ${#}'   "3"
+
 
 # --- Default / assign / error ---
 
@@ -62,10 +66,11 @@ expect_output "dquote-backslash"   'echo "a\"b"'                                
 expect_output "concat-vars"   'a=hello; b=world; echo ${a}_${b}'   "hello_world"
 expect_output "concat-lit"    'x=foo; echo ${x}bar'                "foobar"
 
-# --- Nested expansions ---
+# --- Nested expansions & Special variables ---
 
 expect_output "nested-cmdsub" 'echo $(echo $(echo deep))'   "deep"
 expect_output "arith-in-var"  'x=5; echo $((x * x))'        "25"
+expect_output "multidigit-positional" 'set -- a b c d e f g h i j k; echo ${10}' "j"
 
 # --- Word splitting ---
 

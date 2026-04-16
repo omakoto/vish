@@ -698,12 +698,23 @@ func builtinShift(sh *Shell, args []string) int {
 	if len(args) > 1 {
 		if v, err := strconv.Atoi(args[1]); err == nil && v >= 0 {
 			n = v
+		} else {
+			fmt.Fprintf(sh.Stderr, "vish: shift: %s: numeric argument required\n", args[1])
+			return 1
 		}
 	}
-	if len(sh.Positionals) > 1 {
-		if n > len(sh.Positionals)-1 {
-			n = len(sh.Positionals) - 1
-		}
+	
+	count := len(sh.Positionals) - 1
+	if count < 0 {
+		count = 0
+	}
+	
+	if n > count {
+		fmt.Fprintf(sh.Stderr, "vish: shift: %d: shift count out of range\n", n)
+		return 1
+	}
+	
+	if n > 0 {
 		sh.Positionals = append(sh.Positionals[:1], sh.Positionals[1+n:]...)
 	}
 	return 0

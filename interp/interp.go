@@ -316,6 +316,7 @@ func (sh *Shell) execPipeline(pl *parser.Pipeline) {
 	// The pipeline exits when all goroutines finish.
 
 	type result struct {
+		idx    int
 		status int
 	}
 	results := make(chan result, len(pl.Cmds))
@@ -343,7 +344,7 @@ func (sh *Shell) execPipeline(pl *parser.Pipeline) {
 			if idx < len(writers) {
 				writers[idx].Close()
 			}
-			results <- result{status: sub.LastStatus}
+			results <- result{idx: idx, status: sub.LastStatus}
 		}()
 	}
 
@@ -352,7 +353,9 @@ func (sh *Shell) execPipeline(pl *parser.Pipeline) {
 	last := 0
 	for i := 0; i < len(pl.Cmds); i++ {
 		r := <-results
-		last = r.status
+		if r.idx == len(pl.Cmds)-1 {
+			last = r.status
+		}
 	}
 	sh.LastStatus = last
 	if pl.Negated {
