@@ -27,6 +27,17 @@ assigned"
 expect_output "alt-set"         'x=val; echo ${x:+alt}'          "alt"
 expect_output "alt-unset"       'unset x; echo ${x:+alt}'        ""
 
+# --- Non-colon variants (only trigger if unset, not if empty) ---
+expect_output "nocolon-default-unset" 'unset x; echo ${x-def}'     "def"
+expect_output "nocolon-default-empty" 'x=; echo ${x-def}'          ""
+expect_output "nocolon-default-set"   'x=val; echo ${x-def}'       "val"
+expect_output "nocolon-assign-unset"  'unset x; echo ${x=assigned}; echo $x' "assigned
+assigned"
+expect_output "nocolon-assign-empty"  'x=; echo ${x=assigned}; echo $x' ""
+expect_output "nocolon-alt-set"       'x=val; echo ${x+alt}'       "alt"
+expect_output "nocolon-alt-empty"     'x=; echo ${x+alt}'          "alt"
+expect_output "nocolon-alt-unset"     'unset x; echo ${x+alt}'     ""
+
 # --- Prefix stripping ---
 
 expect_output "strip-prefix"           'x=hello_world; echo ${x#hello_}'        "world"

@@ -378,16 +378,23 @@ func (sh *Shell) evalParamExpr(inner string) (string, error) {
 	}
 
 	// Find operator
-	ops := []string{":-", ":=", ":?", ":+", "##", "#", "%%", "%", ":-", "//", "/#", "/%"}
-	// Simple operators
-	for _, op := range []string{":-", ":=", ":?", ":+", "##", "#", "%%", "%"} {
+	// Two-character operators must be checked before one-character operators
+	for _, op := range []string{":-", ":=", ":?", ":+", "##", "%%"} {
 		if idx := strings.Index(inner, op); idx >= 0 {
 			name := inner[:idx]
 			word := inner[idx+len(op):]
 			return sh.applyParamOp(name, op, word)
 		}
 	}
-	_ = ops
+	// One-character operators
+	for _, op := range []string{"-", "=", "?", "+", "#", "%"} {
+		if idx := strings.Index(inner, op); idx >= 0 {
+			name := inner[:idx]
+			word := inner[idx+len(op):]
+			return sh.applyParamOp(name, op, word)
+		}
+	}
+
 
 	// Just ${name}
 	val, _ := sh.Env.Get(inner)
@@ -398,16 +405,18 @@ func (sh *Shell) applyParamOp(name, op, word string) (string, error) {
 	val, set := sh.Env.Get(name)
 
 	switch op {
-	case ":-":
-		// Use default if unset or empty
-		if !set || val == "" {
+	case ":-", "-":
+		// :- Use default if unset or empty
+		// - Use default if unset
+		if !set || (op == ":-" && val == "") {
 			return sh.ExpandWordNoSplit(word)
 		}
 		return val, nil
 
-	case ":=":
-		// Assign default if unset or empty
-		if !set || val == "" {
+	case ":=", "=":
+		// := Assign default if unset or empty
+		// = Assign default if unset
+		if !set || (op == ":=" && val == "") {
 			def, err := sh.ExpandWordNoSplit(word)
 			if err != nil {
 				return "", err
@@ -417,9 +426,10 @@ func (sh *Shell) applyParamOp(name, op, word string) (string, error) {
 		}
 		return val, nil
 
-	case ":?":
-		// Error if unset or empty
-		if !set || val == "" {
+	case ":?", "?":
+		// :? Error if unset or empty
+		// ? Error if unset
+		if !set || (op == ":?" && val == "") {
 			msg, err := sh.ExpandWordNoSplit(word)
 			if err != nil {
 				return "", err
@@ -431,9 +441,10 @@ func (sh *Shell) applyParamOp(name, op, word string) (string, error) {
 		}
 		return val, nil
 
-	case ":+":
-		// Use alternate if set and non-empty
-		if set && val != "" {
+	case ":+", "+":
+		// :+ Use alternate if set and non-empty
+		// + Use alternate if set
+		if set && (op == "+" || val != "") {
 			return sh.ExpandWordNoSplit(word)
 		}
 		return "", nil
