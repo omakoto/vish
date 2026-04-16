@@ -61,7 +61,8 @@ expect_output "set-positionals" \
 
 expect_output "set-e-stops-on-error" \
   '(set -e; false; echo unreachable) || echo "stopped"' \
-  "stopped"
+  "stopped" \
+  "bash"  # bash --posix: set -e does not exit subshell when guarded by ||
 
 # set -x sends trace to stderr; capture it and verify the assignment appears
 expect_output "set-x-traces" \
@@ -94,7 +95,8 @@ expect_output "export-visible-to-child" \
 
 expect_output "readonly-prevents-assign" \
   'readonly x=5; x=6 2>/dev/null; echo $x' \
-  "5"
+  "5" \
+  "bash"  # bash --posix: readonly error bleeds through even with 2>/dev/null in this context
 
 # --- eval ---
 
@@ -114,7 +116,8 @@ expect_output "eval-complex" \
 
 expect_output "alias-define-and-use" \
   'alias greet="echo hi"; greet there' \
-  "hi there"
+  "hi there" \
+  "bash"  # bash --posix does not expand aliases in non-interactive mode
 
 # --- type ---
 

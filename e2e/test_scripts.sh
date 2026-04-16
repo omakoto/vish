@@ -17,7 +17,7 @@ run_script() {
   local scriptfile="$TMPDIR_TEST/${name}.sh"
   printf '%s\n' "$body" > "$scriptfile"
   local actual
-  actual=$("$VISH" "$scriptfile" 2>&1)
+  actual=$("${VISH_CMD[@]}" "$scriptfile" 2>&1)
   if [ "$actual" = "$expected" ]; then
     printf "[\033[32mPASS\033[0m] script: %s\n" "$name"
     PASS=$((PASS+1))
