@@ -63,9 +63,10 @@ expect_output "set-e-stops-on-error" \
   '(set -e; false; echo unreachable) || echo "stopped"' \
   "stopped"
 
+# set -x sends trace to stderr; capture it and verify the assignment appears
 expect_output "set-x-traces" \
-  'set -x; x=1 2>&1 | grep "^+ x=1" | cat' \
-  "+ x=1"
+  'set -x; x=hello 2>&1 1>/dev/null' \
+  "+ x=hello"
 
 # --- shift ---
 
@@ -91,7 +92,8 @@ expect_output "export-visible-to-child" \
 
 # --- readonly ---
 
-expect_status "readonly-prevents-assign" 'readonly x=5; x=6 2>/dev/null; echo $x' 0\
+expect_output "readonly-prevents-assign" \
+  'readonly x=5; x=6 2>/dev/null; echo $x' \
   "5"
 
 # --- eval ---

@@ -60,6 +60,9 @@ func (e *Env) Get(name string) (string, bool) {
 // Set sets a variable. If the variable already exists in an ancestor scope
 // (and is not locally declared in the current scope), it is updated there.
 // This matches POSIX shell behavior where unlocalized assignments propagate.
+// New variables are created in the root (global) scope, so that assignments
+// inside functions without 'local' are visible globally (POSIX behavior).
+// The 'local' builtin bypasses this by writing directly to Env.vars.
 func (e *Env) Set(name, value string) error {
 	// Check readonly in any scope
 	for cur := e; cur != nil; cur = cur.parent {
@@ -72,18 +75,20 @@ func (e *Env) Set(name, value string) error {
 		e.vars[name] = value
 		return nil
 	}
-	// If the variable exists in an ancestor scope (and we're in a function
-	// child scope), update it there so non-local assignments affect the caller.
-	if e.parent != nil {
-		for cur := e.parent; cur != nil; cur = cur.parent {
-			if _, ok := cur.vars[name]; ok {
-				cur.vars[name] = value
-				return nil
-			}
+	// If the variable exists in an ancestor scope, update it there.
+	for cur := e.parent; cur != nil; cur = cur.parent {
+		if _, ok := cur.vars[name]; ok {
+			cur.vars[name] = value
+			return nil
 		}
 	}
-	// New variable: create in current scope.
-	e.vars[name] = value
+	// New variable: create in root (global) scope so that function
+	// assignments without 'local' are visible to callers.
+	root := e
+	for root.parent != nil {
+		root = root.parent
+	}
+	root.vars[name] = value
 	return nil
 }
 

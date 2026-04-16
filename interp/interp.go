@@ -476,6 +476,10 @@ func (sh *Shell) execSimple(sc *parser.SimpleCmd) {
 
 	// If only assignments (no command)
 	if len(args) == 0 {
+		// Xtrace: print assignments
+		if sh.OptXtrace {
+			fmt.Fprintf(sh.Stderr, "+ %s\n", strings.Join(assigns, " "))
+		}
 		for _, a := range assigns {
 			idx := strings.IndexByte(a, '=')
 			name, val := a[:idx], a[idx+1:]

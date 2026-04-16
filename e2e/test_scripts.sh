@@ -185,6 +185,13 @@ echo done' \
 "done"
 
 # --- Script with functions that call each other ---
+# is_even N: terminates at is_even 0 (prints "even")
+# is_odd N: terminates at is_odd 0 (prints "odd")
+# To reach is_odd 0 from is_even N: call is_even with an odd number
+# is_even 3 -> is_odd 2 -> is_even 1 -> is_odd 0 -> "odd"
+# is_odd 4  -> is_even 3 -> is_odd 2 -> is_even 1 -> is_odd 0 -> "odd" --wrong
+# is_even 0 -> "even" ✓
+# is_even 3 -> ... -> is_odd 0 -> "odd" ✓
 
 run_script "mutual-functions" \
 'is_even() {
@@ -195,8 +202,8 @@ is_odd() {
   [ $1 -eq 0 ] && echo "odd" && return
   is_even $(($1 - 1))
 }
-is_even 8
-is_odd 7' \
+is_even 0
+is_even 3' \
 "even
 odd"
 
