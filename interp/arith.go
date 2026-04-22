@@ -53,8 +53,118 @@ func (e *arithEval) skipWS() {
 	}
 }
 
-// expr parses the full expression (comma operator, assignment).
+// expr parses the full expression (assignment or ternary).
 func (e *arithEval) expr() (int64, error) {
+	return e.assignment()
+}
+
+// assignment handles variable assignment and compound assignment operators.
+// POSIX requires: =, +=, -=, *=, /=, %=, &=, |=, ^=, <<=, >>=
+func (e *arithEval) assignment() (int64, error) {
+	savedPos := e.pos
+	e.skipWS()
+
+	if isNameStartRune(e.peek()) {
+		nameStart := e.pos
+		for isNameContRune(e.peek()) {
+			e.advance()
+		}
+		name := string(e.src[nameStart:e.pos])
+		e.skipWS()
+
+		op := ""
+		switch {
+		case e.peek() == '<' && e.peekAt(1) == '<' && e.peekAt(2) == '=':
+			e.advance(); e.advance(); e.advance()
+			op = "<<="
+		case e.peek() == '>' && e.peekAt(1) == '>' && e.peekAt(2) == '=':
+			e.advance(); e.advance(); e.advance()
+			op = ">>="
+		case e.peek() == '+' && e.peekAt(1) == '=':
+			e.advance(); e.advance()
+			op = "+="
+		case e.peek() == '-' && e.peekAt(1) == '=':
+			e.advance(); e.advance()
+			op = "-="
+		case e.peek() == '*' && e.peekAt(1) == '=':
+			e.advance(); e.advance()
+			op = "*="
+		case e.peek() == '/' && e.peekAt(1) == '=':
+			e.advance(); e.advance()
+			op = "/="
+		case e.peek() == '%' && e.peekAt(1) == '=':
+			e.advance(); e.advance()
+			op = "%="
+		case e.peek() == '&' && e.peekAt(1) == '=':
+			e.advance(); e.advance()
+			op = "&="
+		case e.peek() == '|' && e.peekAt(1) == '=':
+			e.advance(); e.advance()
+			op = "|="
+		case e.peek() == '^' && e.peekAt(1) == '=':
+			e.advance(); e.advance()
+			op = "^="
+		case e.peek() == '=' && e.peekAt(1) != '=':
+			e.advance()
+			op = "="
+		}
+
+		if op != "" {
+			rhs, err := e.assignment()
+			if err != nil {
+				return 0, err
+			}
+			var result int64
+			if op == "=" {
+				result = rhs
+			} else {
+				valStr, _ := e.sh.Env.Get(name)
+				var lhs int64
+				if valStr != "" {
+					lhs, err = strconv.ParseInt(strings.TrimSpace(valStr), 10, 64)
+					if err != nil {
+						return 0, fmt.Errorf("%s: not a valid integer", name)
+					}
+				}
+				switch op {
+				case "+=":
+					result = lhs + rhs
+				case "-=":
+					result = lhs - rhs
+				case "*=":
+					result = lhs * rhs
+				case "/=":
+					if rhs == 0 {
+						return 0, fmt.Errorf("division by zero")
+					}
+					result = lhs / rhs
+				case "%=":
+					if rhs == 0 {
+						return 0, fmt.Errorf("modulo by zero")
+					}
+					result = lhs % rhs
+				case "&=":
+					result = lhs & rhs
+				case "|=":
+					result = lhs | rhs
+				case "^=":
+					result = lhs ^ rhs
+				case "<<=":
+					result = lhs << uint(rhs)
+				case ">>=":
+					result = lhs >> uint(rhs)
+				}
+			}
+			if err := e.sh.Env.Set(name, strconv.FormatInt(result, 10)); err != nil {
+				return 0, fmt.Errorf("%s: %v", name, err)
+			}
+			return result, nil
+		}
+
+		// Not an assignment — backtrack and fall through to ternary
+		e.pos = savedPos
+	}
+
 	return e.ternary()
 }
 

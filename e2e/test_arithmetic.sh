@@ -72,4 +72,19 @@ expect_output "octal-constant"  'echo $((010))'     "8"
 
 expect_output "nested-arith"  'echo $(($(echo 3) + $(echo 4)))'  "7"
 
+# --- Arithmetic assignment operators (POSIX required) ---
+
+expect_output "arith-assign"          'x=0; echo $((x = 5)); echo $x'     "5
+5"
+expect_output "arith-assign-plus"     'x=10; echo $((x += 3)); echo $x'   "13
+13"
+expect_output "arith-assign-minus"    'x=10; echo $((x -= 3)); echo $x'   "7
+7"
+expect_output "arith-assign-mul"      'x=4; echo $((x *= 3)); echo $x'    "12
+12"
+expect_output "arith-assign-div"      'x=12; echo $((x /= 3)); echo $x'   "4
+4"
+expect_output "arith-assign-mod"      'x=10; echo $((x %= 3)); echo $x'   "1
+1"
+
 end_suite
