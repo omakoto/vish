@@ -71,13 +71,6 @@ func (sh *Shell) ExpandWords(raws []string) ([]string, error) {
 	return result, nil
 }
 
-// ─── segment: tracks which characters came from unquoted regions ─────────────
-
-type segment struct {
-	val      string
-	unquoted bool
-}
-
 // expandWordParts expands a raw word, returning the expanded string and a
 // parallel boolean slice indicating which bytes are from unquoted regions.
 func (sh *Shell) expandWordParts(raw string) (string, []bool, error) {
@@ -335,9 +328,6 @@ func (sh *Shell) expandParamBrace(src []rune, i int) (string, int, error) {
 			depth++
 		case '}':
 			depth--
-			if depth == 0 {
-				break
-			}
 		case '\'':
 			j++
 			for j < len(src) && src[j] != '\'' {
@@ -398,7 +388,6 @@ func (sh *Shell) evalParamExpr(inner string) (string, error) {
 		}
 	}
 
-
 	// Just ${name}
 	val, _ := sh.getVarOrSpecial(inner)
 	return val, nil
@@ -433,7 +422,7 @@ func (sh *Shell) getVarOrSpecial(name string) (string, bool) {
 			return sh.shellFlags(), true
 		}
 	}
-	
+
 	isNumeric := true
 	for _, r := range name {
 		if r < '0' || r > '9' {
@@ -449,7 +438,7 @@ func (sh *Shell) getVarOrSpecial(name string) (string, bool) {
 		}
 		return "", false
 	}
-	
+
 	return sh.Env.Get(name)
 }
 
@@ -634,7 +623,6 @@ func shellGlobMatchRunes(pat, s []rune) bool {
 	return len(s) == 0
 }
 
-
 // expandCmdSubst handles $( ... ). i points past the opening '('.
 func (sh *Shell) expandCmdSubst(src []rune, i int) (string, int, error) {
 	depth := 1
@@ -645,9 +633,6 @@ func (sh *Shell) expandCmdSubst(src []rune, i int) (string, int, error) {
 			depth++
 		case ')':
 			depth--
-			if depth == 0 {
-				break
-			}
 		case '\'':
 			j++
 			for j < len(src) && src[j] != '\'' {

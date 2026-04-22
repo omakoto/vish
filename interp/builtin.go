@@ -365,7 +365,6 @@ func countFormatArgs(format string) int {
 	return count
 }
 
-
 func sprintfShell(format string, args []string) string {
 	var sb strings.Builder
 	runes := []rune(format)
@@ -456,7 +455,6 @@ func sprintfShell(format string, args []string) string {
 	}
 	return sb.String()
 }
-
 
 // export
 func builtinExport(sh *Shell, args []string) int {
@@ -710,17 +708,17 @@ func builtinShift(sh *Shell, args []string) int {
 			return 1
 		}
 	}
-	
+
 	count := len(sh.Positionals) - 1
 	if count < 0 {
 		count = 0
 	}
-	
+
 	if n > count {
 		fmt.Fprintf(sh.Stderr, "vish: shift: %d: shift count out of range\n", n)
 		return 1
 	}
-	
+
 	if n > 0 {
 		sh.Positionals = append(sh.Positionals[:1], sh.Positionals[1+n:]...)
 	}

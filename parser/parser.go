@@ -12,9 +12,9 @@ import (
 
 // Parser parses a token stream into a shell AST.
 type Parser struct {
-	lex      *lexer.Lexer
-	tok      lexer.Token // current look-ahead
-	multiLine bool       // allow reading more input lines (interactive)
+	lex       *lexer.Lexer
+	tok       lexer.Token // current look-ahead
+	multiLine bool        // allow reading more input lines (interactive)
 }
 
 // New creates a Parser from an input string.
@@ -34,8 +34,6 @@ func NewMultiLine(input string) *Parser {
 func (p *Parser) advance() {
 	p.tok = p.lex.Next()
 }
-
-func (p *Parser) peek() lexer.Token { return p.tok }
 
 func (p *Parser) eat(tt lexer.TokenType) (lexer.Token, error) {
 	t := p.tok
@@ -158,12 +156,6 @@ func (p *Parser) parseStmt() (*Stmt, error) {
 	return stmt, nil
 }
 
-// fillHeredocsStmt collects heredoc bodies for all << redirects in a statement.
-func (p *Parser) fillHeredocsStmt(stmt *Stmt) {
-	ReadHeredocs(p.lex, []*Stmt{stmt})
-}
-
-
 // parseList parses a list of statements terminated by one of the stop words.
 // stopWords are keyword strings that indicate the list has ended.
 func (p *Parser) parseList(stopWords ...string) ([]*Stmt, error) {
@@ -245,7 +237,7 @@ func (p *Parser) parsePipeline() (*Pipeline, error) {
 	}
 	if cmd == nil {
 		if negated {
-			return nil, fmt.Errorf("expected command after !")
+			return nil, fmt.Errorf("expected command after '!'")
 		}
 		return nil, nil
 	}

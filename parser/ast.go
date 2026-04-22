@@ -22,7 +22,7 @@ type AndOr struct {
 
 // AndOrPipeline pairs a logical operator with a pipeline.
 type AndOrPipeline struct {
-	Op       string    // "" (first item), "&&", "||"
+	Op       string // "" (first item), "&&", "||"
 	Pipeline *Pipeline
 }
 
@@ -37,8 +37,8 @@ type Cmd struct {
 	// Exactly one of these is set:
 	Simple   *SimpleCmd
 	If       *IfClause
-	While    *WhileClause  // kind="while"
-	Until    *WhileClause  // kind="until"
+	While    *WhileClause // kind="while"
+	Until    *WhileClause // kind="until"
 	For      *ForClause
 	Case     *CaseClause
 	Subshell *Subshell

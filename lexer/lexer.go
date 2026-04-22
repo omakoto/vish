@@ -7,11 +7,11 @@ import "strings"
 // Words preserve all quoting/expansion syntax verbatim; the interpreter
 // expands them at runtime.
 type Lexer struct {
-	src     []rune
-	pos     int
-	line    int
-	col     int
-	queue   []Token // look-ahead buffer
+	src   []rune
+	pos   int
+	line  int
+	col   int
+	queue []Token // look-ahead buffer
 	// Pending heredocs: after scanning a newline that follows a << operator,
 	// fill these heredoc structures from the input.
 	pendingHeredocs []*HeredocPending
@@ -20,7 +20,7 @@ type Lexer struct {
 // HeredocPending holds a heredoc redir waiting for its body to be read.
 type HeredocPending struct {
 	Delim string
-	Strip bool // <<-
+	Strip bool    // <<-
 	Out   *string // pointer to Redir.HereDoc
 }
 
@@ -36,13 +36,6 @@ func (l *Lexer) peek() rune {
 		return 0
 	}
 	return l.src[l.pos]
-}
-
-func (l *Lexer) peek2() rune {
-	if l.pos+1 >= len(l.src) {
-		return 0
-	}
-	return l.src[l.pos+1]
 }
 
 func (l *Lexer) advance() rune {

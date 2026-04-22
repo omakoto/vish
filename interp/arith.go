@@ -75,34 +75,46 @@ func (e *arithEval) assignment() (int64, error) {
 		op := ""
 		switch {
 		case e.peek() == '<' && e.peekAt(1) == '<' && e.peekAt(2) == '=':
-			e.advance(); e.advance(); e.advance()
+			e.advance()
+			e.advance()
+			e.advance()
 			op = "<<="
 		case e.peek() == '>' && e.peekAt(1) == '>' && e.peekAt(2) == '=':
-			e.advance(); e.advance(); e.advance()
+			e.advance()
+			e.advance()
+			e.advance()
 			op = ">>="
 		case e.peek() == '+' && e.peekAt(1) == '=':
-			e.advance(); e.advance()
+			e.advance()
+			e.advance()
 			op = "+="
 		case e.peek() == '-' && e.peekAt(1) == '=':
-			e.advance(); e.advance()
+			e.advance()
+			e.advance()
 			op = "-="
 		case e.peek() == '*' && e.peekAt(1) == '=':
-			e.advance(); e.advance()
+			e.advance()
+			e.advance()
 			op = "*="
 		case e.peek() == '/' && e.peekAt(1) == '=':
-			e.advance(); e.advance()
+			e.advance()
+			e.advance()
 			op = "/="
 		case e.peek() == '%' && e.peekAt(1) == '=':
-			e.advance(); e.advance()
+			e.advance()
+			e.advance()
 			op = "%="
 		case e.peek() == '&' && e.peekAt(1) == '=':
-			e.advance(); e.advance()
+			e.advance()
+			e.advance()
 			op = "&="
 		case e.peek() == '|' && e.peekAt(1) == '=':
-			e.advance(); e.advance()
+			e.advance()
+			e.advance()
 			op = "|="
 		case e.peek() == '^' && e.peekAt(1) == '=':
-			e.advance(); e.advance()
+			e.advance()
+			e.advance()
 			op = "^="
 		case e.peek() == '=' && e.peekAt(1) != '=':
 			e.advance()

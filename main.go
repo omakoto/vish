@@ -14,8 +14,6 @@ import (
 	"golang.org/x/term"
 )
 
-const vishVersion = "0.1.0"
-
 func main() {
 	var (
 		cmdFlag     = flag.String("c", "", "Execute command string")
@@ -207,7 +205,7 @@ func isIncomplete(input string) bool {
 	inDouble := false
 
 	// Track open compound command keywords
-	depth := 0     // ( ) depth
+	depth := 0      // ( ) depth
 	braceDepth := 0 // { } depth
 	backtick := 0
 

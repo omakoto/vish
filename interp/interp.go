@@ -34,19 +34,19 @@ func (j *Job) Wait() {
 // ─── Shell is the main interpreter state ─────────────────────────────────────
 
 type Shell struct {
-	Env        *Env
+	Env         *Env
 	Positionals []string // $0, $1, ...
-	Funcs      map[string]*parser.FuncDef
-	Aliases    map[string]string
-	Traps      map[string]string // signal/spec → handler code
-	Jobs       []*Job
+	Funcs       map[string]*parser.FuncDef
+	Aliases     map[string]string
+	Traps       map[string]string // signal/spec → handler code
+	Jobs        []*Job
 
 	Stdin  io.Reader
 	Stdout io.Writer
 	Stderr io.Writer
 
-	CWD        string
-	IsSubshell bool
+	CWD           string
+	IsSubshell    bool
 	IsInteractive bool
 
 	// Shell options

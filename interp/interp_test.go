@@ -13,23 +13,23 @@ import (
 // runVishScript runs a script and returns stdout, stderr, and exit code.
 func runVishScript(input string) (string, string, int) {
 	sh := interp.New()
-	
+
 	// Capture I/O
 	var stdoutBuf bytes.Buffer
 	var stderrBuf bytes.Buffer
-	
+
 	sh.Stdin = strings.NewReader("")
 	sh.Stdout = &stdoutBuf
 	sh.Stderr = &stderrBuf
-	
+
 	// Standard test environment
 	sh.Env.Set("PATH", os.Getenv("PATH"))
 	sh.Env.Set("HOME", os.Getenv("HOME"))
 	sh.Env.Set("USER", os.Getenv("USER"))
-	
+
 	// Execute
 	status := sh.RunString(input)
-	
+
 	return stdoutBuf.String(), stderrBuf.String(), status
 }
 
@@ -169,12 +169,12 @@ func TestHeredoc(t *testing.T) {
 hello
 world
 EOF`
-	
+
 	stdout, _, status := runVishScript(input)
 	if status != 0 {
 		t.Errorf("expected status 0, got %d", status)
 	}
-	
+
 	expected := "hello\nworld\n"
 	if stdout != expected {
 		t.Errorf("expected stdout %q, got %q", expected, stdout)
@@ -184,13 +184,13 @@ EOF`
 // TestPipeline tests pipelining which requires real goroutines
 func TestPipeline(t *testing.T) {
 	input := `echo hello world | tr ' ' '\n' | head -1`
-	
+
 	// Use standard sh with access to tr/head from PATH
 	stdout, _, status := runVishScript(input)
 	if status != 0 {
 		t.Errorf("expected status 0, got %d", status)
 	}
-	
+
 	expected := "hello\n"
 	if stdout != expected {
 		t.Errorf("expected stdout %q, got %q", expected, stdout)
