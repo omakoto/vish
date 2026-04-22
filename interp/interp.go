@@ -93,7 +93,7 @@ func New() *Shell {
 // subshell creates a copy of the shell for subshell execution.
 func (sh *Shell) subshell() *Shell {
 	sub := &Shell{
-		Env:         sh.Env.child(),
+		Env:         sh.Env.Clone(),
 		Positionals: append([]string{}, sh.Positionals...),
 		Funcs:       make(map[string]*parser.FuncDef),
 		Aliases:     make(map[string]string),
@@ -108,13 +108,6 @@ func (sh *Shell) subshell() *Shell {
 		OptXtrace:   sh.OptXtrace,
 		OptNoexec:   sh.OptNoexec,
 		OptNoglob:   sh.OptNoglob,
-	}
-	// Copy all exported vars into the child env's root
-	for k, v := range sh.Env.AllVars() {
-		sub.Env.vars[k] = v
-		if sh.Env.IsExported(k) {
-			sub.Env.attrs[k] |= attrExport
-		}
 	}
 	// Copy functions
 	for k, v := range sh.Funcs {

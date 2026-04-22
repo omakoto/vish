@@ -47,6 +47,34 @@ func (e *Env) child() *Env {
 	}
 }
 
+// Clone creates a detached deep copy of the environment (for subshells).
+func (e *Env) Clone() *Env {
+	c := &Env{
+		vars:  make(map[string]string),
+		attrs: make(map[string]int),
+	}
+	for k, v := range e.AllVars() {
+		c.vars[k] = v
+		if e.IsExported(k) {
+			c.attrs[k] |= attrExport
+		}
+		if e.IsReadonly(k) {
+			c.attrs[k] |= attrReadonly
+		}
+	}
+	return c
+}
+
+// IsReadonly reports whether name is readonly.
+func (e *Env) IsReadonly(name string) bool {
+	for cur := e; cur != nil; cur = cur.parent {
+		if a, ok := cur.attrs[name]; ok && a&attrReadonly != 0 {
+			return true
+		}
+	}
+	return false
+}
+
 // Get looks up a variable, walking up the scope chain.
 func (e *Env) Get(name string) (string, bool) {
 	for cur := e; cur != nil; cur = cur.parent {
