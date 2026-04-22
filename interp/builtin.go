@@ -1142,6 +1142,10 @@ func builtinTrap(sh *Shell, args []string) int {
 
 	action := args[1]
 	for _, sig := range args[2:] {
+		// POSIX: signal 0 is an alias for EXIT
+		if sig == "0" {
+			sig = "EXIT"
+		}
 		if action == "-" {
 			delete(sh.Traps, sig)
 		} else {

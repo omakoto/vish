@@ -137,4 +137,15 @@ expect_output "type-function" \
   'f() { echo hi; }; type f | grep -q function && echo yes' \
   "yes"
 
+# --- trap ---
+
+# POSIX: signal 0 is an alias for EXIT; trap ... 0 must behave like trap ... EXIT
+expect_output "trap-exit-by-name" \
+  'trap "echo caught" EXIT; exit 0' \
+  "caught"
+
+expect_output "trap-exit-by-number" \
+  'trap "echo caught" 0; exit 0' \
+  "caught"
+
 end_suite

@@ -161,6 +161,7 @@ func (sh *Shell) RunString(input string) (status int) {
 					status = es.code
 					return
 				}
+				runExitTrap(sh)
 				os.Exit(es.code)
 			}
 			panic(r)
