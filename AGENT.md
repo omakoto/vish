@@ -10,4 +10,5 @@ Vish is a posix compliant shell written in gloang.
 
 ## Before commit
 
-Before committing any changes, always make sure to run @./e2e/run_tests.sh and @presubmit.sh.
+- *ALWAYS* run @./e2e/run_tests.sh and @presubmit.sh and fix all the issues before
+committing any changes.
