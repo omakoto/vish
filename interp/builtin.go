@@ -597,15 +597,19 @@ func builtinUnset(sh *Shell, args []string) int {
 		}
 		a = a[1:]
 	}
+	status := 0
 	for _, name := range a {
 		if !varsOnly {
 			delete(sh.Funcs, name)
 		}
 		if !funcsOnly {
-			sh.Env.Unset(name)
+			if err := sh.Env.Unset(name); err != nil {
+				fmt.Fprintf(sh.Stderr, "unset: %v\n", err)
+				status = 1
+			}
 		}
 	}
-	return 0
+	return status
 }
 
 // set
@@ -756,15 +760,13 @@ func builtinRead(sh *Shell, args []string) int {
 				break
 			}
 			if buf[0] == '\\' && !raw {
-				// Check for continuation
+				// Without -r: backslash-newline is line continuation (both discarded);
+				// backslash before any other character escapes it (backslash discarded).
 				n2, _ := sh.Stdin.Read(buf[:])
-				if n2 > 0 && buf[0] == '\n' {
-					continue // line continuation
+				if n2 > 0 && buf[0] != '\n' {
+					sb.WriteByte(buf[0]) // escaped char kept, backslash consumed
 				}
-				sb.WriteByte('\\')
-				if n2 > 0 {
-					sb.WriteByte(buf[0])
-				}
+				// If followed by newline: discard both (line continuation)
 				continue
 			}
 			sb.WriteByte(buf[0])

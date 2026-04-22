@@ -130,10 +130,15 @@ func (e *Env) SetGlobal(name, value string) error {
 }
 
 // Unset removes a variable from the current and parent scopes.
-func (e *Env) Unset(name string) {
+// Returns an error if the variable is readonly (POSIX requires unset to fail on readonly vars).
+func (e *Env) Unset(name string) error {
+	if e.IsReadonly(name) {
+		return fmt.Errorf("%s: cannot unset: readonly variable", name)
+	}
 	for cur := e; cur != nil; cur = cur.parent {
 		delete(cur.vars, name)
 	}
+	return nil
 }
 
 // Export marks a variable as exported (creates it if absent).

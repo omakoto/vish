@@ -734,13 +734,7 @@ func (sh *Shell) execCase(cc *parser.CaseClause) {
 		matched := false
 		for _, pat := range item.Patterns {
 			expandedPat, _ := sh.ExpandWordNoSplit(pat)
-			ok, err := filepath.Match(expandedPat, word)
-			if err == nil && ok {
-				matched = true
-				break
-			}
-			// Also support * as a catch-all
-			if expandedPat == "*" {
+			if shellGlobMatch(expandedPat, word) {
 				matched = true
 				break
 			}

@@ -377,7 +377,7 @@ func (sh *Shell) evalParamExpr(inner string) (string, error) {
 			return strconv.Itoa(len(sh.Positionals) - 1), nil
 		}
 		val, _ := sh.getVarOrSpecial(name)
-		return strconv.Itoa(len(val)), nil
+		return strconv.Itoa(len([]rune(val))), nil
 	}
 
 	// Two-character operators must be checked before one-character operators
@@ -737,67 +737,101 @@ type splitPart struct {
 }
 
 // wordSplit splits an expanded string using IFS, respecting quoted regions.
+//
+// POSIX field splitting rules:
+//   - Each IFS-whitespace sequence (alone) collapses into one separator; leading/trailing ignored.
+//   - Each IFS-non-whitespace character is always a separator, even creating empty fields.
+//   - IFS-whitespace adjacent to an IFS-non-whitespace char is merged with it (not a second separator).
 func wordSplit(s string, unquoted []bool, ifs string) []splitPart {
 	if ifs == "" {
 		// No splitting
 		return []splitPart{{val: s, unquoted: anyUnquoted(unquoted)}}
 	}
 
-	ifsWhite := ifsWhitespace(ifs)
-	ifsNonWhite := ifsNonWhitespace(ifs)
+	ifsWhiteStr := ifsWhitespace(ifs)
+	ifsNonWhiteStr := ifsNonWhitespace(ifs)
+
+	isW := func(r rune) bool { return strings.ContainsRune(ifsWhiteStr, r) }
+	isN := func(r rune) bool { return strings.ContainsRune(ifsNonWhiteStr, r) }
+	isUnq := func(i int) bool { return i < len(unquoted) && unquoted[i] }
 
 	var parts []splitPart
 	var cur strings.Builder
 	curUnquoted := false
-	inField := false
 
-	runes := []rune(s)
-	for i, r := range runes {
-		uq := i < len(unquoted) && unquoted[i]
+	// State machine states:
+	//   0 = accumulating field characters
+	//   1 = after IFS-whitespace (no non-whitespace IFS seen yet; leading/standalone whitespace)
+	//   2 = after IFS-non-whitespace (and any adjacent right-side IFS-whitespace)
+	state := 0
 
-		// \x00 is our internal sentinel for "$@" field boundary — always split here
+	emitField := func() {
+		parts = append(parts, splitPart{val: cur.String(), unquoted: curUnquoted || cur.Len() == 0})
+		cur.Reset()
+		curUnquoted = false
+	}
+
+	for i, r := range []rune(s) {
+		uq := isUnq(i)
+
+		// \x00: internal "$@" field boundary — always split here regardless of IFS
 		if r == '\x00' {
-			parts = append(parts, splitPart{val: cur.String(), unquoted: curUnquoted})
-			cur.Reset()
-			curUnquoted = false
-			inField = false
+			emitField()
+			state = 0
 			continue
 		}
 
 		if !uq {
-			// Quoted character — always part of field
+			// Quoted character — always part of current field
 			cur.WriteRune(r)
 			curUnquoted = false
-			inField = true
+			state = 0
 			continue
 		}
 
-		// Unquoted character
-		isIFSWhite := strings.ContainsRune(ifsWhite, r)
-		isIFSNonWhite := strings.ContainsRune(ifsNonWhite, r)
+		switch {
+		case isN(r):
+			switch state {
+			case 0: // field → emit current field, enter state 2
+				emitField()
+				state = 2
+			case 1: // IFS-whitespace was adjacent to this non-whitespace IFS; field already emitted
+				state = 2
+			case 2: // consecutive non-whitespace IFS → emit empty field
+				emitField()
+				// state stays 2
+			}
 
-		if isIFSWhite || isIFSNonWhite {
-			// This is a field separator
-			if inField || cur.Len() > 0 {
-				parts = append(parts, splitPart{val: cur.String(), unquoted: curUnquoted})
-				cur.Reset()
-				curUnquoted = false
-				inField = false
+		case isW(r):
+			switch state {
+			case 0: // field → emit if non-empty, enter state 1
+				if cur.Len() > 0 {
+					emitField()
+				}
+				state = 1
+			case 1: // more whitespace — skip (collapse)
+			case 2: // right-adjacent whitespace after non-whitespace IFS — skip
 			}
-			// Skip subsequent IFS whitespace
-			if isIFSWhite {
-				continue
-			}
-			// A non-whitespace IFS char terminates the current field and may start a new empty one
-		} else {
+
+		default:
+			// Regular (non-IFS) character
 			cur.WriteRune(r)
 			curUnquoted = true
-			inField = true
+			state = 0
 		}
 	}
 
-	if cur.Len() > 0 || inField {
-		parts = append(parts, splitPart{val: cur.String(), unquoted: curUnquoted})
+	// End of string
+	switch state {
+	case 0:
+		if cur.Len() > 0 {
+			parts = append(parts, splitPart{val: cur.String(), unquoted: curUnquoted})
+		}
+	case 1:
+		// Trailing IFS-whitespace: ignored per POSIX
+	case 2:
+		// Trailing IFS-non-whitespace: emit empty trailing field
+		parts = append(parts, splitPart{val: "", unquoted: true})
 	}
 
 	if len(parts) == 0 {
