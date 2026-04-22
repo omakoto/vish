@@ -293,7 +293,8 @@ func (sh *Shell) expandDollar(src []rune, i int, inDouble bool) (string, int, er
 
 	case ch == '*':
 		ifs := sh.getIFS()
-		sep := " "
+		// POSIX: "$*" joins with first IFS char; with null IFS, joins with no separator.
+		sep := ""
 		if len(ifs) > 0 {
 			sep = string(ifs[0])
 		}
@@ -414,7 +415,8 @@ func (sh *Shell) getVarOrSpecial(name string) (string, bool) {
 			return strings.Join(sh.Positionals[1:], " "), true
 		case '*':
 			ifs := sh.getIFS()
-			sep := " "
+			// POSIX: "$*" joins with first IFS char; with null IFS, joins with no separator.
+			sep := ""
 			if len(ifs) > 0 {
 				sep = string(ifs[0])
 			}

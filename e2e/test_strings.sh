@@ -90,4 +90,13 @@ expect_output "ifs-change" \
 b
 c"
 
+# POSIX: "$*" must use first IFS char as separator, or no separator when IFS is null.
+expect_output "dollar-star-ifs-separator" \
+  'IFS=":"; set -- a b c; echo "$*"' \
+  "a:b:c"
+
+expect_output "dollar-star-null-ifs-no-separator" \
+  'IFS=""; set -- a b c; echo "$*"' \
+  "abc"
+
 end_suite
