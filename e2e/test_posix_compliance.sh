@@ -47,4 +47,18 @@ expect_status "unset-readonly-returns-nonzero" \
   'readonly x=5; unset x' \
   1
 
+# Bug 6: "$@" must always split into separate words even if IFS is null.
+# POSIX: "the parameter '@' shall be expanded to separate words ... even when IFS is null."
+expect_output "dollar-at-null-ifs-still-splits" \
+  'IFS=""; set -- a b c; for w in "$@"; do echo "[$w]"; done' \
+  "[a]
+[b]
+[c]"
+
+# Bug 8: read with non-whitespace IFS must not collapse consecutive separators.
+# POSIX: "Each occurrence in the input of an IFS non-whitespace character ... shall be a delimiter."
+expect_output "read-ifs-nonwhite-consecutive" \
+  'printf "a::b" | (IFS=:; read x y z; echo "[$x][$y][$z]")' \
+  "[a][][b]"
+
 end_suite

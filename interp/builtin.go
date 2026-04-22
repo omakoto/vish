@@ -815,22 +815,54 @@ func splitByIFS(s, ifs string) []string {
 	if ifs == "" {
 		return []string{s}
 	}
-	var fields []string
-	start := -1
-	for i, c := range s {
-		if strings.ContainsRune(ifs, c) {
-			if start >= 0 {
-				fields = append(fields, s[start:i])
-				start = -1
-			}
+
+	ifsWhiteStr := ""
+	ifsNonWhiteStr := ""
+	for _, c := range ifs {
+		if c == ' ' || c == '\t' || c == '\n' {
+			ifsWhiteStr += string(c)
 		} else {
-			if start < 0 {
-				start = i
-			}
+			ifsNonWhiteStr += string(c)
 		}
 	}
-	if start >= 0 {
-		fields = append(fields, s[start:])
+
+	isW := func(r rune) bool { return strings.ContainsRune(ifsWhiteStr, r) }
+	isN := func(r rune) bool { return strings.ContainsRune(ifsNonWhiteStr, r) }
+
+	var fields []string
+	var cur strings.Builder
+
+	// state: 0=field, 1=white, 2=non-white
+	state := 1 // ignore leading white
+
+	emit := func() {
+		fields = append(fields, cur.String())
+		cur.Reset()
+	}
+
+	for _, r := range s {
+		if isN(r) {
+			switch state {
+			case 0, 1, 2:
+				emit()
+				state = 2
+			}
+		} else if isW(r) {
+			switch state {
+			case 0:
+				emit()
+				state = 1
+			case 1, 2:
+				// collapse or ignore
+			}
+		} else {
+			cur.WriteRune(r)
+			state = 0
+		}
+	}
+
+	if state == 0 || state == 2 {
+		emit()
 	}
 	return fields
 }

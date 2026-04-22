@@ -730,11 +730,6 @@ type splitPart struct {
 //   - Each IFS-non-whitespace character is always a separator, even creating empty fields.
 //   - IFS-whitespace adjacent to an IFS-non-whitespace char is merged with it (not a second separator).
 func wordSplit(s string, unquoted []bool, ifs string) []splitPart {
-	if ifs == "" {
-		// No splitting
-		return []splitPart{{val: s, unquoted: anyUnquoted(unquoted)}}
-	}
-
 	ifsWhiteStr := ifsWhitespace(ifs)
 	ifsNonWhiteStr := ifsNonWhitespace(ifs)
 
@@ -845,15 +840,6 @@ func ifsNonWhitespace(ifs string) string {
 		}
 	}
 	return b.String()
-}
-
-func anyUnquoted(flags []bool) bool {
-	for _, f := range flags {
-		if f {
-			return true
-		}
-	}
-	return false
 }
 
 // containsGlob reports whether a string contains unescaped glob metacharacters.
