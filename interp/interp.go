@@ -208,6 +208,15 @@ func (sh *Shell) execStmts(stmts []*parser.Stmt) {
 	}
 }
 
+// execCond executes a condition list (if/elif/while/until).
+// POSIX: the errexit (-e) flag must not apply to compound-command conditions.
+func (sh *Shell) execCond(stmts []*parser.Stmt) {
+	saved := sh.OptExit
+	sh.OptExit = false
+	sh.execStmts(stmts)
+	sh.OptExit = saved
+}
+
 func runExitTrap(sh *Shell) {
 	if handler, ok := sh.Traps["EXIT"]; ok && handler != "" {
 		delete(sh.Traps, "EXIT") // prevent infinite recursion
@@ -642,13 +651,13 @@ func (sh *Shell) callFunc(fn *parser.FuncDef, args []string, assigns []string) {
 // ─── Compound commands ────────────────────────────────────────────────────────
 
 func (sh *Shell) execIf(ic *parser.IfClause) {
-	sh.execStmts(ic.Cond)
+	sh.execCond(ic.Cond)
 	if sh.LastStatus == 0 {
 		sh.execStmts(ic.Then)
 		return
 	}
 	for _, elif := range ic.Elifs {
-		sh.execStmts(elif.Cond)
+		sh.execCond(elif.Cond)
 		if sh.LastStatus == 0 {
 			sh.execStmts(elif.Then)
 			return
@@ -661,7 +670,7 @@ func (sh *Shell) execIf(ic *parser.IfClause) {
 
 func (sh *Shell) execWhile(wc *parser.WhileClause) {
 	for {
-		sh.execStmts(wc.Cond)
+		sh.execCond(wc.Cond)
 		condOk := sh.LastStatus == 0
 		if wc.Kind == "until" {
 			condOk = !condOk

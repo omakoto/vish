@@ -183,4 +183,14 @@ expect_output "return-from-loop" \
    f; echo $?' \
   "99"
 
+# POSIX: set -e (errexit) must NOT trigger when a command is used as the condition
+# of an if, elif, while, or until statement (even if it returns non-zero).
+expect_output "set-e-if-condition-exempt" \
+  'set -e; if false; then echo yes; fi; echo done' \
+  "done"
+
+expect_output "set-e-while-condition-exempt" \
+  'set -e; i=3; while [ $i -gt 0 ]; do i=$((i-1)); done; echo done' \
+  "done"
+
 end_suite
