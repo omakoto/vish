@@ -441,7 +441,10 @@ func sprintfShell(format string, args []string) string {
 		case 'o':
 			sb.WriteString(fmt.Sprintf(spec, nextInt()))
 		case 'b':
-			sb.WriteString(fmt.Sprintf("%b", nextInt()))
+			// POSIX %b: interpret backslash escapes in the string argument
+			interpreted := interpretEscapes(nextArg())
+			goSpec := strings.Replace(spec, "b", "s", 1)
+			sb.WriteString(fmt.Sprintf(goSpec, interpreted))
 		case 'c':
 			s := nextArg()
 			if len(s) > 0 {

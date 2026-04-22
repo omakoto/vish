@@ -22,6 +22,10 @@ expect_output "printf-int"     'printf "%d + %d = %d\n" 3 4 7'  "3 + 4 = 7"
 expect_output "printf-padded"  'printf "%-10s|\n" hi'           "hi        |"
 expect_output "printf-hex"     'printf "0x%x\n" 255'            "0xff"
 expect_output "printf-oct"     'printf "%o\n" 8'                "10"
+# POSIX %b: interpret backslash escapes in the argument string (like echo -e)
+expect_output "printf-b-tab"   'printf "%b" "hello\tworld\n"'    "$(printf 'hello\tworld\n')"
+expect_output "printf-b-newline" 'printf "[%b]\n" "a\\nb"'       "[a
+b]"
 
 # --- test / [ ] ---
 
